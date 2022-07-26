@@ -29,8 +29,3 @@ class SimpleClassifier(nn.Module):
         x = F.leaky_relu(self.fc1(x))
         x = self.fc2(x)
         return x
-
-x = torch.rand((1,1,28,28))
-net = SimpleClassifier()
-x1 = net(x)
-print(x1.shape)
