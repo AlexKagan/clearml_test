@@ -93,7 +93,7 @@ class MnistTrain:
                 total += labels.size(0)
                 correct += (pred == labels).sum().item()
         accuracy = correct/total
-        val_loss = running_loss.item() / (i + 1)
+        val_loss = running_loss / (i + 1)
         model_saved = False
         if accuracy > self.best_metric:
             torch.save(self.net.state_dict(), os.path.join(self.exp_folder, f"best_model.pth"))
