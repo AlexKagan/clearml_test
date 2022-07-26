@@ -20,11 +20,12 @@ torch.backends.cudnn.deterministic = False
 torch.backends.cudnn.benchmark = True
 
 class MnistTrain:
-    def __init__(self, config) -> None:
+    def __init__(self, DIR_PATH) -> None:
         self.task = Task.init(project_name="Clearml_test", task_name=f"Mnist_exp", reuse_last_task_id=True,
                          auto_resource_monitoring=True, auto_connect_streams=True)
         self.logger = self.task.get_logger()
-        self.config = config
+        path_to_config = self.task.connect_configuration(os.path.join(DIR_PATH, "config", "mnist_config.json"))
+        self.config = IO.read_json(path_to_config)
         self.config = self.task.connect_configuration(self.config)
         self.best_metric = 0
         self.device = torch.device('cuda' if (torch.cuda.is_available() and self.config["device"]) else 'cpu')
