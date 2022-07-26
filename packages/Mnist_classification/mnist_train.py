@@ -25,6 +25,7 @@ class MnistTrain:
                          auto_resource_monitoring=True, auto_connect_streams=True)
         self.logger = self.task.get_logger()
         self.config = config
+        self.config = self.task.connect_configuration(self.config)
         self.best_metric = 0
         self.device = torch.device('cuda' if (torch.cuda.is_available() and self.config["device"]) else 'cpu')
         self.config["device"] = 'cuda' if (torch.cuda.is_available() and self.config["device"]) else 'cpu'
@@ -119,7 +120,6 @@ class MnistTrain:
     def run(self):
         self.create_exp_folder()
         self.task.set_parameters(self.config)
-        # self.config = self.task.connect_configuration(self.config)
         self.load_data()
         self.upload_net()
         self.train_net()
