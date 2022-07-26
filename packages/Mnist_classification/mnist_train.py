@@ -26,8 +26,8 @@ class MnistTrain:
         self.logger = self.task.get_logger()
         self.config = config
         self.best_metric = 0
-        self.config["device"] = torch.device('cuda' if (torch.cuda.is_available() and self.config["cuda"]) else 'cpu')
-        self.device = self.config["device"]
+        self.device = torch.device('cuda' if (torch.cuda.is_available() and self.config["device"]) else 'cpu')
+        self.config["device"] = 'cuda' if (torch.cuda.is_available() and self.config["device"]) else 'cpu'
         print(f"Device: {self.device}")
         self.run()
 
