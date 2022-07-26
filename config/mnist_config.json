@@ -1,6 +1,8 @@
 {
     "lr": 2e-3,
-    "batch_size": 1,
-    "epoch": 25,
-    "device": "cuda"
+    "weight_dec": 1e-2,
+    "batch_size": 100,
+    "num_epochs": 10,
+    "device": "cuda",
+    "num_worker": 0
 }
