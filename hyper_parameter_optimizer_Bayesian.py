@@ -4,9 +4,17 @@ import psutil
 from clearml import Task
 from clearml.automation import (
     DiscreteParameterRange, HyperParameterOptimizer, RandomSearch, UniformParameterRange,
-    UniformIntegerParameterRange)
+    UniformIntegerParameterRange, GridSearch)
 
-aSearchStrategy = RandomSearch
+# trying to load Bayesian optimizer package
+try:
+    from clearml.automation.optuna import OptimizerOptuna  
+    aSearchStrategy = OptimizerOptuna
+except ImportError as ex:
+    logging.getLogger().warning(
+        'Apologies, it seems you do not have \'optuna\' or \'hpbandster\' installed, '
+        'we will be using GridSearch strategy instead')
+    aSearchStrategy = GridSearch
 
 def job_complete_callback(
     job_id,                 # type: str
@@ -44,7 +52,7 @@ an_optimizer = HyperParameterOptimizer(
     # and you should instead pass "Args/batch_size"
     hyper_parameters=[
         UniformParameterRange('General/lr', min_value=1e-4, max_value=1e-2),
-        DiscreteParameterRange('General/num_epochs', values=[5, 17]),
+        DiscreteParameterRange('General/num_epochs', values=[5, 20]),
         DiscreteParameterRange('General/batch_size', values=[128, 64, 256]),        
     ],
     # this is the objective metric we want to maximize/minimize
@@ -55,7 +63,7 @@ an_optimizer = HyperParameterOptimizer(
     # let us limit the number of concurrent experiments,
     # this in turn will make sure we do dont bombard the scheduler with experiments.
     # if we have an auto-scaler connected, this, by proxy, will limit the number of machine
-    max_number_of_concurrent_tasks=2,
+    max_number_of_concurrent_tasks=1,
     # this is the optimizer class (actually doing the optimization)
     # Currently, we can choose from GridSearch, RandomSearch or OptimizerBOHB (Bayesian optimization Hyper-Band)
     # more are coming soon...
@@ -75,22 +83,28 @@ an_optimizer = HyperParameterOptimizer(
     # set the maximum number of jobs to launch for the optimization, default (None) unlimited
     # If OptimizerBOHB is used, it defined the maximum budget in terms of full jobs
     # basically the cumulative number of iterations will not exceed total_max_jobs * max_iteration_per_job
-    total_max_jobs=100,
+    total_max_jobs=80,
     # set the minimum number of iterations for an experiment, before early stopping.
     # Does not apply for simple strategies such as RandomSearch or GridSearch
     min_iteration_per_job=35,
     # Set the maximum number of iterations for an experiment to execute
     # (This is optional, unless using OptimizerBOHB where this is a must)
-    max_iteration_per_job=100,
+    max_iteration_per_job=120,
 )
 
+# if we are running as a service, just enqueue ourselves into the services queue and let it run the optimization
+if args['run_as_service']:
+    # if this code is executed by `clearml-agent` the function call does nothing.
+    # if executed locally, the local process will be terminated, and a remote copy will be executed instead
+    task.execute_remotely(queue_name='services', exit_process=True)
+
 # report every 12 seconds, this is way too often, but we are testing here J
-an_optimizer.set_report_period(12)
+an_optimizer.set_report_period(2.2)
 # start the optimization process, callback function to be called every time an experiment is completed
 # this function returns immediately
 an_optimizer.start(job_complete_callback=job_complete_callback)
-# set the time limit for the optimization process (8 hours)
-an_optimizer.set_time_limit(in_minutes=1 * 60)
+# set the time limit for the optimization process (2 hours)
+an_optimizer.set_time_limit(in_minutes=120.0)
 # wait until process is done (notice we are controlling the optimization process in the background)
 an_optimizer.wait()
 # optimization is completed, print the top performing experiments id
